@@ -2,6 +2,7 @@
 #include "monitor_OTA.h"
 // #include "monitor_bluetooth.h"
 #include "motor_control.h"
+#include "monitor_imu.h"
 
 void setup()
 {
@@ -14,6 +15,7 @@ void setup()
   // xTaskCreate(monitor_bluetooth, "Monitor BT", 4096, NULL, 2, NULL);
   // xTaskCreate(motor_control, "Motor control", 1024, NULL, 2, NULL);
   xTaskCreate(motor_control, "Motor control", 2048, NULL, 2, NULL);
+  xTaskCreate(monitor_imu, "Monitor IMU", 2048, NULL, 2, NULL);
 }
 
 
