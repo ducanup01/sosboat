@@ -4,6 +4,7 @@
 #include <WiFi.h>
 #include <ArduinoOTA.h>
 #include "motor_control.h" 
+#include "yaw_PID.h"
 
 #define BOOT_BTN GPIO_NUM_0
 
@@ -11,31 +12,199 @@
 
 #define max_duty 255
 
-void stopMotors();
-void motorControl(int leftSpeed, int rightSpeed);
-
-//placeholder
-
 const char* ssid = "12N9";
 const char* password = "dangducan";
+// const char* ssid = "Fulbright_Student1";
+// const char* password = "fulbright2018";
 const uint16_t TCP_PORT = 69;
 
 WiFiServer server(TCP_PORT);
 WiFiClient client;
 
+Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
+
 
 const char* ap_ssid = "chiec thuyen ngoai xa";
 const char* ap_password = "123123123";
 
+void stopMotors();
+void motorControl(int leftSpeed, int rightSpeed);
+
+void handle_serial_input_v2()
+{
+    // if (!client || !client.connected())
+    // {
+    //     client = server.available();
+    //     if (client)
+    //     {
+    //         Serial.println("Client connected!");
+    //         client.println("Connected to ESP32 WiFi Serial Bridge!");
+    //     }
+    // }
+
+    // if (Serial.available())
+    // {
+    //     while (Serial.available())
+    //     {
+    //         client.write(Serial.read());
+    //         // ArduinoOTA.handle();
+    //     }
+    // }
+
+    // if (client && client.available())
+    // {
+    //     String input = client.readStringUntil('\n');
+    //     input.trim();
+
+    //     if (input.length() > 0)
+    //     {
+    //         int speedValue = input.toInt();
+    //         speedValue = constrain(speedValue, -max_duty, max_duty);
+
+    //         if (speedValue == 0)
+    //         {
+    //             stopMotors();
+    //             client.println("Motors stopped!");
+    //         }
+    //         else
+    //         {
+    //             motorControl(speedValue, speedValue);
+    //             client.printf("Motors running at %d (PWM duty)\n", speedValue);
+    //         }
+    //     }
+    // }
+
+    if (client && client.available())
+    {
+        String input = client.readStringUntil('\n');
+        input.trim();
+
+        if (input.length() == 0) return; // skip empty lines
+
+        // Check if input is numeric (possibly with a leading minus sign)
+        bool isNumeric = true;
+        for (size_t i = 0; i < input.length(); i++)
+        {
+            if (!(isDigit(input[i]) || (i == 0 && input[i] == '-')))
+            {
+                isNumeric = false;
+                break;
+            }
+        }
+
+        if (!isNumeric)
+        {
+            // Non-numeric command (e.g. "go" or "stop")
+            handleCommand(input);
+        }
+        else
+        {
+            // Numeric command (manual speed input)
+            int speedValue = input.toInt();
+            speedValue = constrain(speedValue, -max_duty, max_duty);
+
+            if (speedValue == 0)
+            {
+                stopMotors();
+                client.println("Motors stopped!");
+            }
+            else
+            {
+                motorControl(speedValue, speedValue);
+                client.printf("Motors running at %d (PWM duty)\n", speedValue);
+            }
+        }
+    }
+
+}
+
+void handle_serial_input()
+{
+    // --- Handle USB Serial input (from PC Serial Monitor) ---
+    if (Serial.available())
+    {
+        String input = Serial.readStringUntil('\n');
+        input.trim();
+        if (input.length() == 0) return;
+
+        if (isdigit(input[0]) || input[0] == '-')
+        {
+            int speedValue = input.toInt();
+            speedValue = constrain(speedValue, -max_duty, max_duty);
+
+            if (speedValue == 0)
+            {
+                stopMotors();
+                Serial.println("Motors stopped!");
+            }
+            else
+            {
+                motorControl(speedValue, speedValue);
+                Serial.printf("Motors running at %d (PWM duty)\n", speedValue);
+            }
+        }
+        else
+        {
+            handleCommand(input);
+        }
+    }
+
+    // --- Handle TCP client input (from WiFi) ---
+    if (!client || !client.connected())
+    {
+        client = server.available();
+        if (client)
+        {
+            Serial.println("Client connected!");
+            client.println("Setting up BNO055...");
+            setup_imu();
+            client.println("Connected to ESP32 WiFi Serial Bridge!");
+            // sensors_event_t acc, gyro, mag, ori;
+        }
+    }
+
+    if (client && client.available())
+    {
+        String input = client.readStringUntil('\n');
+        input.trim();
+        if (input.length() == 0) return;
+
+        if (isdigit(input[0]) || input[0] == '-')
+        {
+            int speedValue = input.toInt();
+            speedValue = constrain(speedValue, -max_duty, max_duty);
+
+            if (speedValue == 0)
+            {
+                stopMotors();
+                client.println("Motors stopped!");
+            }
+            else
+            {
+                motorControl(speedValue, speedValue);
+                client.printf("Motors running at %d (PWM duty)\n", speedValue);
+            }
+        }
+        else
+        {
+            handleCommand(input);
+        }
+    }
+}
+
+
+
 void switchToAPMode()
 {
-    Serial.println("Switching to AP mode for 5 minutes..."); vTaskDelay(pdMS_TO_TICKS(50));
+    Serial.println("Switching to AP mode for 5 minutes...");
+    vTaskDelay(pdMS_TO_TICKS(50));
     WiFi.disconnect(true);
     WiFi.mode(WIFI_AP);
 
     if (WiFi.softAP(ap_ssid, ap_password))
     {
-        Serial.println("Access Point started!"); vTaskDelay(pdMS_TO_TICKS(50));
+        Serial.println("Access Point started!");
+        vTaskDelay(pdMS_TO_TICKS(50));
         Serial.print("SSID: "); vTaskDelay(pdMS_TO_TICKS(50));
         Serial.println(ap_ssid); vTaskDelay(pdMS_TO_TICKS(50));
         Serial.print("Password: "); vTaskDelay(pdMS_TO_TICKS(50));
@@ -83,17 +252,38 @@ void switchToAPMode()
 void monitor_OTA(void *pvParameters)
 {
     Serial.println("Booting..."); vTaskDelay(pdMS_TO_TICKS(50));
+    // Serial.println("Setting up BNO055...");
+    // setup_imu();
 
     WiFi.mode(WIFI_STA);
+    vTaskDelay(pdMS_TO_TICKS(500));
     WiFi.begin(ssid, password);
+    vTaskDelay(pdMS_TO_TICKS(500));
     Serial.println("Connecting to WiFi..."); vTaskDelay(pdMS_TO_TICKS(50));
 
-    while (WiFi.waitForConnectResult() != WL_CONNECTED)
+    int retryCount = 0;
+
+    while (WiFi.status() != WL_CONNECTED && retryCount < 12)
     {
-        Serial.println("Rebooting...");
-        vTaskDelay(pdMS_TO_TICKS(1000));
-        ESP.restart();
+        Serial.println("WiFi not connected, retrying...");
+        WiFi.begin(ssid, password);
+        retryCount++;
+        vTaskDelay(pdMS_TO_TICKS(5000));
     }
+
+    if (WiFi.status() != WL_CONNECTED)
+    {
+        Serial.println("No WiFi connection. Switching to AP mode...");
+        switchToAPMode();
+    }
+
+    // while (WiFi.waitForConnectResult() != WL_CONNECTED)
+    // {
+    //     Serial.println("Rebooting...");
+    //     vTaskDelay(pdMS_TO_TICKS(3000));
+    //     ESP.restart();
+    // }
+
 
     Serial.println("WiFi connected!"); vTaskDelay(pdMS_TO_TICKS(50));
 
@@ -158,47 +348,8 @@ void monitor_OTA(void *pvParameters)
 
         ArduinoOTA.handle();
 
-        if (!client || !client.connected())
-        {
-            client = server.available();
-            if (client)
-            {
-                Serial.println("Client connected!");
-                client.println("Connected to ESP32 WiFi Serial Bridge!");
-            }
-        }
+        handle_serial_input();
 
-        if (Serial.available())
-        {
-            while (Serial.available())
-            {
-                client.write(Serial.read());
-                // ArduinoOTA.handle();
-            }
-        }
-
-        if (client && client.available())
-        {
-            String input = client.readStringUntil('\n');
-            input.trim();
-
-            if (input.length() > 0)
-            {
-                int speedValue = input.toInt();
-                speedValue = constrain(speedValue, -max_duty, max_duty);
-
-                if (speedValue == 0)
-                {
-                    stopMotors();
-                    client.println("Motors stopped!");
-                }
-                else
-                {
-                    motorControl(speedValue, speedValue);
-                    client.printf("Motors running at %d (PWM duty)\n", speedValue);
-                }
-            }
-        }
         vTaskDelay(pdMS_TO_TICKS(50));
     }
 }

@@ -57,14 +57,8 @@ void motorControl(int leftSpeed, int rightSpeed)
     }
 }
 
-void motor_control(void *pvParameters)
+void initialize_motors()
 {
-    Serial.begin(115200);
-    // pinMode(motor_left_fw, OUTPUT);
-    // pinMode(motor_left_bw, OUTPUT);
-    // pinMode(motor_right_fw, OUTPUT);
-    // pinMode(motor_right_bw, OUTPUT);
-
     ledcSetup(pwm_channel_left_fw, pwm_frequency, pwm_resolution);
     ledcSetup(pwm_channel_left_bw, pwm_frequency, pwm_resolution);
     ledcSetup(pwm_channel_right_fw, pwm_frequency, pwm_resolution);
@@ -74,6 +68,17 @@ void motor_control(void *pvParameters)
     ledcAttachPin(motor_left_bw, pwm_channel_left_bw);
     ledcAttachPin(motor_right_fw, pwm_channel_right_fw);
     ledcAttachPin(motor_right_bw, pwm_channel_right_bw);
+}
+
+void motor_control(void *pvParameters)
+{
+    Serial.begin(115200);
+    // pinMode(motor_left_fw, OUTPUT);
+    // pinMode(motor_left_bw, OUTPUT);
+    // pinMode(motor_right_fw, OUTPUT);
+    // pinMode(motor_right_bw, OUTPUT);
+
+    initialize_motors();
 
     Serial.println("Enter motor speed (-255 to 255):");
     Serial.println("Positive = forward, Negative = backward, 0 = stop");
