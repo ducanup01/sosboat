@@ -17,7 +17,7 @@ extern Adafruit_BNO055 bno;
 
 float Kp = 2.0;
 float Ki = 0.0; 
-float Kd = 1.0; 
+float Kd = 1.5; 
 
 bool isRunning = false;
 
@@ -76,16 +76,16 @@ int computeBaseSpeed(float error)
 
 void yaw_PID(void *pvParameters)
 {
-    vTaskDelay(pdMS_TO_TICKS(1000));
     
     Serial.println("Yaw PID control started");
+    initialize_motors();
     
+    vTaskDelay(pdMS_TO_TICKS(1000));
     
     // Serial.println("Setting up BNO055...");
     setup_imu();
     sensors_event_t acc, gyro, mag, ori;
     
-    initialize_motors();
     
     
     while (1)    
@@ -204,6 +204,22 @@ void handleCommand(String input)
         Serial.println("🛑 Boat stopped.");
         if (client && client.connected())
             client.println("🛑 Boat stopped.");
+    }
+    else if (input.equalsIgnoreCase("left"))
+    {
+        targetYaw -= 90;
+        if (targetYaw < 0) targetYaw += 360;
+        Serial.printf("⬅️ Turn left! Target yaw: %.2f°\n", targetYaw);
+        if (client && client.connected())
+            client.printf("⬅️ Turn left! Target yaw: %.2f°\n", targetYaw);
+    }
+    else if (input.equalsIgnoreCase("right"))
+    {
+        targetYaw += 90;
+        if (targetYaw > 360) targetYaw -= 360;
+        Serial.printf("➡️ Turn right! Target yaw: %.2f°\n", targetYaw);
+        if (client && client.connected())
+            client.printf("➡️ Turn right! Target yaw: %.2f°\n", targetYaw);
     }
 }
 

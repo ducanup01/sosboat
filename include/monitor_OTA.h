@@ -12,10 +12,10 @@
 
 #define max_duty 255
 
-const char* ssid = "12N9";
-const char* password = "dangducan";
-// const char* ssid = "Fulbright_Student1";
-// const char* password = "fulbright2018";
+// const char* ssid = "12N9";
+// const char* password = "dangducan";
+const char* ssid = "Fulbright_Student1";
+const char* password = "fulbright2018";
 const uint16_t TCP_PORT = 69;
 
 WiFiServer server(TCP_PORT);
@@ -223,6 +223,7 @@ void switchToAPMode()
 
     while (millis() - apStart < 5*60*1000UL)
     {
+        // ArduinoOTA.handle(); must be followed by a task delay
         ArduinoOTA.handle();
         vTaskDelay(pdMS_TO_TICKS(150));
     }
@@ -345,11 +346,11 @@ void monitor_OTA(void *pvParameters)
                 switchToAPMode();
             }
         }
-
-        ArduinoOTA.handle();
-
+        
         handle_serial_input();
-
+        
+        // ArduinoOTA.handle(); must be followed by a task delay
+        ArduinoOTA.handle();
         vTaskDelay(pdMS_TO_TICKS(50));
     }
 }
