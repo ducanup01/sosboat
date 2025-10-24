@@ -192,6 +192,35 @@ void handle_serial_input()
     }
 }
 
+void setupOTA() 
+{
+    ArduinoOTA.setHostname("chiecthuyenngoaixa");
+    ArduinoOTA.setPassword("123123123");
+
+    ArduinoOTA
+        .onStart([]() {
+            String type = (ArduinoOTA.getCommand() == U_FLASH) ? "sketch" : "filesystem";
+            Serial.println("Start updating " + type);
+        })
+        .onEnd([]() {
+            Serial.println("\nUpdate complete!");
+        })
+        .onProgress([](unsigned int progress, unsigned int total) {
+            Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+        })
+        .onError([](ota_error_t error) {
+            Serial.printf("Error[%u]: ", error);
+            if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+            else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+            else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+            else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+            else if (error == OTA_END_ERROR) Serial.println("End Failed");
+        });
+
+    ArduinoOTA.begin();
+    Serial.println("✅ OTA ready on " + WiFi.localIP().toString());
+}
+
 
 
 void switchToAPMode()
@@ -221,11 +250,13 @@ void switchToAPMode()
     ArduinoOTA.begin();
     unsigned long apStart = millis();
 
-    while (millis() - apStart < 5*60*1000UL)
-    {
+    while (millis() - apStart < 60*60*1000UL)
+    {       
+        handle_serial_input();
+        
         // ArduinoOTA.handle(); must be followed by a task delay
         ArduinoOTA.handle();
-        vTaskDelay(pdMS_TO_TICKS(150));
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 
     Serial.println("\n5 minutes passed, returning to STA mode..."); vTaskDelay(pdMS_TO_TICKS(50));
@@ -246,7 +277,7 @@ void switchToAPMode()
     Serial.print("IP address: "); vTaskDelay(pdMS_TO_TICKS(50));
     Serial.println(WiFi.localIP()); vTaskDelay(pdMS_TO_TICKS(50));
 
-    ArduinoOTA.begin();
+    setupOTA();
 
 }
 
@@ -285,41 +316,12 @@ void monitor_OTA(void *pvParameters)
     //     ESP.restart();
     // }
 
+    // ArduinoOTA.begin();
+
 
     Serial.println("WiFi connected!"); vTaskDelay(pdMS_TO_TICKS(50));
 
-    ArduinoOTA.setHostname("chiecthuyenngoaixa");
-    ArduinoOTA.setPassword("123123123");
-
-    ArduinoOTA
-        .onStart([]() 
-        {
-            String type;
-            if (ArduinoOTA.getCommand() == U_FLASH)
-            type = "sketch";
-            else
-            type = "filesystem";
-
-            Serial.println("Start updating " + type);
-        })
-        .onEnd([]() 
-        {
-            Serial.println("\nUpdate complete!");
-        })
-        .onProgress([](unsigned int progress, unsigned int total) 
-        {
-            Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-        })
-        .onError([](ota_error_t error) {
-            Serial.printf("Error[%u]: ", error);
-            if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-            else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-            else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-            else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-            else if (error == OTA_END_ERROR) Serial.println("End Failed");
-        });
-    
-    ArduinoOTA.begin();
+    setupOTA();
 
     Serial.println("Ready for OTA updates!"); vTaskDelay(pdMS_TO_TICKS(50));
     Serial.print("IP address: "); vTaskDelay(pdMS_TO_TICKS(50));
@@ -333,6 +335,10 @@ void monitor_OTA(void *pvParameters)
 
     while (1)
     {
+        // ArduinoOTA.handle(); must be followed by a task delay
+        ArduinoOTA.handle();
+        vTaskDelay(pdMS_TO_TICKS(100));
+        
         if (digitalRead(BOOT_BTN) == LOW)
         {
             vTaskDelay(pdMS_TO_TICKS(50));
@@ -349,9 +355,6 @@ void monitor_OTA(void *pvParameters)
         
         handle_serial_input();
         
-        // ArduinoOTA.handle(); must be followed by a task delay
-        ArduinoOTA.handle();
-        vTaskDelay(pdMS_TO_TICKS(50));
     }
 }
 

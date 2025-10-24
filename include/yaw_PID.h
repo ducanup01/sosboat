@@ -92,6 +92,8 @@ void yaw_PID(void *pvParameters)
     {
         if (isRunning)
         {
+            ArduinoOTA.handle();
+
             bno.getEvent(&acc, Adafruit_BNO055::VECTOR_LINEARACCEL);
             bno.getEvent(&gyro, Adafruit_BNO055::VECTOR_GYROSCOPE);
             bno.getEvent(&mag, Adafruit_BNO055::VECTOR_MAGNETOMETER);
@@ -141,12 +143,15 @@ void yaw_PID(void *pvParameters)
                     leftSpeed, rightSpeed, Kp, Ki, Kd
                 );
             }
+            
         }
         else
         {
             stopMotors();
+            ArduinoOTA.handle();
         }
-        vTaskDelay(pdMS_TO_TICKS(50));
+        ArduinoOTA.handle();
+        vTaskDelay(pdMS_TO_TICKS(60));
     }
 
 
