@@ -15,9 +15,9 @@ extern Adafruit_BNO055 bno;
 
 // extern WiFiClient client;
 
-float Kp = 2.0;
-float Ki = 0.0; 
-float Kd = 1.5; 
+float Kp = 7.5;
+float Ki = 2.5; 
+float Kd = 4.0; 
 
 bool isRunning = false;
 
