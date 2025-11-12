@@ -16,7 +16,7 @@
 // Frequency (depends on your region)
 #define LORA_BAND  433E6   // 915 MHz for US/VN — use 868E6 for EU, 433E6 for CN
 
-SPIClass loraSPI(VSPI);
+SPIClass loraSPI(HSPI);
 
 void monitor_lora(void *pvParameters)
 {

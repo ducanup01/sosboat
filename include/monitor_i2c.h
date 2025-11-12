@@ -14,7 +14,7 @@
 
 // Adafruit_BNO055 bno = Adafruit_BNO055(55, BNO055_ADDRESS);
 extern Adafruit_BNO055 bno;
-extern Adafruit_BMP280 bmp;
+// extern Adafruit_BMP280 bmp;
 
 extern float yaw;
 extern float pitch;
@@ -33,8 +33,8 @@ void setup_i2c()
 void setup_imu()
 {
     Serial.println("Initializing BNO055...");
+    vTaskDelay(pdMS_TO_TICKS(1000));
     // bno.begin();
-    // vTaskDelay(pdMS_TO_TICKS(5000));
     
     while (!bno.begin()) 
     {
@@ -60,7 +60,7 @@ void monitor_i2c(void *pvParameters)
 {
     setup_i2c();
     setup_imu();
-    setup_bmp();
+    // setup_bmp();
     vTaskDelay(pdMS_TO_TICKS(500));
     sensors_event_t acc, gyro, mag, ori;
 
@@ -76,9 +76,9 @@ void monitor_i2c(void *pvParameters)
         pitch = ori.orientation.y;
         roll = ori.orientation.z;
 
-        pressure = bmp.readPressure() / 100.0F;
+        // pressure = bmp.readPressure() / 100.0F;
 
-        Serial.printf("Yaw: %8.3f | Pitch: %8.3f | Roll: %8.3f | Pressure: %8.3f\n\r", yaw, pitch, roll, pressure);
+        Serial.printf("Yaw: %8.3f | Pitch: %8.3f | Roll: %8.3f\n\r", yaw, pitch, roll);
 
         // if (client && client.connected())
         // {
