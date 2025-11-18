@@ -5,7 +5,7 @@
 // #include "monitor_sd.h"
 #include "monitor_lora.h"
 #include "monitor_OTA.h"
-// #include "led.h"
+#include "led.h"
 #include "input_pin.h"
 #include "global.h"
 
@@ -40,14 +40,14 @@ void setup()
     {
         xTaskCreate(monitor_lora, "LoRA", 8192, NULL, 2, NULL);
     }
-
+    
     xTaskCreate(modeManager, "Monitor Green button", 2048, NULL, 2, NULL);
-
-
-
-
+    
+    
+    
+    
     // xTaskCreate(yaw_PID, "Straight YAW", 4096, NULL, 2, NULL);
-
+    
     // xTaskCreate(led_control, "LED", 1024, NULL, 2, NULL);
     // xTaskCreate(monitor_input, "INPUT PINS", 2048, NULL, 2, NULL);
     // xTaskCreate(monitor_i2c, "Monitor IMU", 4096, NULL, 2, NULL);
