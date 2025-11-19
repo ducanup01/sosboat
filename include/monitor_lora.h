@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <SPI.h>
+#include <LoRa.h>
 
 // ----- Pin mapping -----
 #define LORA_SCK   14
@@ -19,6 +20,14 @@
 
 // Declare SPI instance (defined in .cpp)
 extern SPIClass loraSPI;
+
+// ----- Functions -----
+void monitor_lora(void *pvParameters);
+void handleLoRaCommand(String input);
+
+// ----- LoRa helper functions (defined elsewhere) -----
+String LoRaRead();
+void LoRaPrintln(const String &msg);
 
 // Task function declaration
 void monitor_lora(void *pvParameters);

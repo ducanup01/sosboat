@@ -9,14 +9,21 @@
 #define MODE_PIN GPIO_NUM_36
 #define GREEN_LED GPIO_NUM_17
 
-// --- Sensor objects (declare only) ---
-extern Adafruit_BNO055 bno;
-extern Adafruit_BMP280 bmp;
+extern float Kp;
+extern float Ki; 
+extern float Kd; 
 
 // --- Global variables (declare only) ---
 extern float yaw;
 extern float pitch;
 extern float roll;
 extern float pressure;
+
+extern float targetYaw;
+
+extern int baseSpeed;
+
+void LoRaPrintln(const String &msg);
+String LoRaRead();
 
 #endif
