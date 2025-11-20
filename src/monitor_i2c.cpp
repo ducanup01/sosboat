@@ -5,11 +5,10 @@
 Adafruit_BNO055 bno = Adafruit_BNO055();
 Adafruit_BMP280 bmp;
 
+unsigned long lastPrint = 0;
 
 void setup_i2c()
 {
-    // Serial.begin(115200);  // No Serial
-
     pinMode(21, INPUT_PULLUP);
     pinMode(22, INPUT_PULLUP);
 
@@ -28,7 +27,7 @@ void setup_imu()
     }
 
     bno.setExtCrystalUse(true);
-    LoRaPrintln("BNO055 connected! ✅");
+    // LoRaPrintln("BNO055 connected! ✅");
 }
 
 void setup_bmp()
@@ -39,14 +38,16 @@ void setup_bmp()
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 
-    LoRaPrintln("BMP280 connected! ✅");
+    // LoRaPrintln("BMP280 connected! ✅");
 }
 
 void monitor_i2c(void *pvParameters)
 {
     setup_i2c();
     setup_imu();
-    // setup_bmp();
+    setup_bmp();
+    LoRaPrintln("Submarine is active ✅");
+
 
     vTaskDelay(pdMS_TO_TICKS(500));
 
@@ -63,17 +64,22 @@ void monitor_i2c(void *pvParameters)
         // pitch = ori.orientation.y;
         // roll = ori.orientation.z;
 
-        // pressure = bmp.readPressure() / 100.0F;
+        pressure = bmp.readPressure() / 100.0F;
 
-        // // Format the IMU data
-        // String msg = 
-        //     "Yaw: " + String(yaw, 3) + 
-        //     " | Pitch: " + String(pitch, 3) + 
-        //     " | Roll: " + String(roll, 3) +
-        //     " | Pressure: " + String(pressure, 3);
+        if (millis() - lastPrint >= 1000)
+        {
+            lastPrint = millis();
 
-        // LoRaPrintln(msg);
+            // // Format the IMU data
+            String msg = 
+                "Yaw: " + String(yaw, 3) + 
+                // " | Pitch: " + String(pitch, 3) + 
+                // " | Roll: " + String(roll, 3) +
+                " | Pressure: " + String(pressure, 3);
+    
+            LoRaPrintln(msg);
+        }
 
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(300));
     }
 }

@@ -8,7 +8,7 @@
 #include "led.h"
 #include "input_pin.h"
 #include "global.h"
-#include "test_water.h"
+#include "monitor_motors.h"
 #include "yaw_PID.h"
 
 
@@ -25,7 +25,7 @@ void setup()
     pinMode(MODE_PIN, INPUT);
     pinMode(GREEN_LED, OUTPUT);
 
-    if (gpio_get_level(MODE_PIN) == HIGH) // when button is pressed
+    if (gpio_get_level(MODE_PIN) == HIGH) // when button is pressed, do not change code below
     {
         /***************************************************************************
          * ████████████████████████████████████████████████████████████████████████ *
@@ -43,13 +43,13 @@ void setup()
     {
         // ============================ USER TASKS BEGIN ============================
         
-        xTaskCreate(monitor_lora, "LoRA", 8192, NULL, 2, NULL);
-        
         xTaskCreate(monitor_i2c, "Monitor IMU", 8192, NULL, 2, NULL);
         
+        xTaskCreate(monitor_lora, "LoRA", 8192, NULL, 2, NULL);
+        
+        xTaskCreate(monitor_motors, "Monitor motors", 4096, NULL, 2, NULL);
+        
         xTaskCreate(yaw_PID, "Straight YAW", 8192, NULL, 2, NULL);
-
-        // xTaskCreate(test_water, "TEST WATER", 2048, NULL, 2, NULL);
 
         // ============================ USER TASKS END   ============================
     }

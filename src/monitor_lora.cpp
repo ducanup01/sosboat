@@ -31,7 +31,7 @@ void handleLoRaCommand(String input) {
         targetYaw = yaw;
         lastError = 0;
         integral = 0;
-        lastTime = millis();
+        lastTime = micros();
         isRunning = true;
         LoRaPrintln("🚤 Going straight! Target yaw: " + String(targetYaw, 2) + "°");
     }
@@ -57,16 +57,19 @@ void handleLoRaCommand(String input) {
 
     // ----------------- Pump commands -----------------
     else if (input.equalsIgnoreCase("sm")) {
-        pump_in();
+        pumpAbort = true;
+        pumpCommand = PUMP_IN;
         LoRaPrintln("💧 Submerging...");
     }
     else if (input.equalsIgnoreCase("sf")) {
-        pump_out();
+        pumpAbort = true;
+        pumpCommand = PUMP_OUT;
         LoRaPrintln("💧 Surfacing...");
     }
     else if (input.equalsIgnoreCase("sp")) {
-        pump_stop();
-        LoRaPrintln("⏹ Pump stopped.");
+        pumpAbort = true;
+        pumpCommand = PUMP_STOP;
+        LoRaPrintln("PUMP STOPPED");
     }
 
     // ----------------- Base speed -----------------
@@ -123,7 +126,7 @@ void monitor_lora(void *pvParameters)
     // }
 
     Serial.println("[LoRa Task] LoRa initialized successfully!");
-    LoRa.setTxPower(12);
+    LoRa.setTxPower(17);
     LoRa.setSpreadingFactor(7);
     LoRa.setSignalBandwidth(125E3);
     LoRa.setCodingRate4(5);
@@ -135,6 +138,6 @@ void monitor_lora(void *pvParameters)
             handleLoRaCommand(msg); // handle command
         }
 
-        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskDelay(pdMS_TO_TICKS(3));
     }
 }

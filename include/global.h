@@ -23,6 +23,20 @@ extern float targetYaw;
 
 extern int baseSpeed;
 
+// Motor state
+enum PumpCommand {
+    PUMP_IDLE,
+    PUMP_IN,
+    PUMP_OUT,
+    PUMP_STOP
+};
+
+extern volatile PumpCommand pumpCommand;
+
+
+// Action flags
+extern volatile bool pumpAbort;
+
 void LoRaPrintln(const String &msg);
 String LoRaRead();
 

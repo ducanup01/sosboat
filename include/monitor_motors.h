@@ -1,5 +1,5 @@
-#ifndef __TEST_WATER_H__
-#define __TEST_WATER_H__
+#ifndef __MONITOR_MOTORS__
+#define __MONITOR_MOTORS__
 
 #include <Arduino.h>
 
@@ -38,6 +38,6 @@ void pump_in();
 void pump_out();
 
 // ---------- Main task ----------
-void test_water(void *pvParameters);
+void monitor_motors(void *pvParameters);
 
 #endif

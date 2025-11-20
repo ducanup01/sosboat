@@ -1,7 +1,8 @@
-#include "test_water.h"
+#include "monitor_motors.h"
+#include "global.h"
 
-// ---------- Global variable definitions ----------
-int motorSpeed = 0;
+
+int max_pump_time = 50000;
 
 // ---------- Motor Control ----------
 void stopMotors()
@@ -62,70 +63,82 @@ void pump_stop()
 {
     digitalWrite(motor_pump_in,  LOW);
     digitalWrite(motor_pump_out, LOW);
-    Serial.println("Pump OFF");
+
+    vTaskDelay(pdMS_TO_TICKS(20));
 }
 
 void pump_in()
 {
-    Serial.println("Pumping IN (Float)");
-    while (!(gpio_get_level(switch_low) == HIGH && gpio_get_level(switch_high) == HIGH))
+    pumpAbort = false;  // reset
+
+
+    while (!(gpio_get_level(switch_low) == HIGH &&
+             gpio_get_level(switch_high) == HIGH))
     {
-        digitalWrite(motor_pump_in,  HIGH);
+        
+        digitalWrite(motor_pump_in, HIGH);
         digitalWrite(motor_pump_out, LOW);
+        
         vTaskDelay(pdMS_TO_TICKS(20));
+        if (pumpAbort) break;   // ONLY interrupts when sm/sf/sp send abort
     }
-    digitalWrite(motor_pump_in,  LOW);
+
+    digitalWrite(motor_pump_in, LOW);
     digitalWrite(motor_pump_out, LOW);
 }
 
 void pump_out()
 {
+    pumpAbort = false;  // reset
+
     unsigned long startTime = millis();
 
-    digitalWrite(motor_pump_in,  LOW);
+    digitalWrite(motor_pump_in, LOW);
     digitalWrite(motor_pump_out, HIGH);
-    while (millis() - startTime < 45000) {
-        delay(10);
+
+    while (millis() - startTime < max_pump_time)
+    {
+        vTaskDelay(pdMS_TO_TICKS(20));
+        if (pumpAbort) break;   // ONLY interrupts when sm/sf/sp send abort
     }
+
     digitalWrite(motor_pump_in, LOW);
     digitalWrite(motor_pump_out, LOW);
 }
 
 // ---------- Main control task ----------
-void test_water(void *pvParameters)
+void monitor_motors(void *pvParameters)
 {
     initialize_motors();
 
     while (1)
     {
-        int lowSwitch  = gpio_get_level(switch_low);
-        int highSwitch = gpio_get_level(switch_high);
-
-        // Pump IN phase
-        while (!(lowSwitch == HIGH && highSwitch == HIGH))
+        switch (pumpCommand)
         {
-            lowSwitch  = gpio_get_level(switch_low);
-            highSwitch = gpio_get_level(switch_high);
-
-            if (lowSwitch == HIGH && highSwitch == HIGH)
-            {
-                pump_stop();
+            case PUMP_IN:
+                pumpAbort = false;
+                pump_in();       // runs until abort or condition
+                pumpCommand = PUMP_IDLE;
                 break;
-            }
 
-            pump_in();
-            vTaskDelay(pdMS_TO_TICKS(50));
+            case PUMP_OUT:
+                pumpAbort = false;
+                pump_out();      // runs until abort or done
+                pumpCommand = PUMP_IDLE;
+                break;
+
+            case PUMP_STOP:
+                pumpAbort = true;
+                pump_stop();     // instantly stop
+                pumpCommand = PUMP_IDLE;
+                break;
+
+            case PUMP_IDLE:
+            default:
+                // Nothing to do
+                break;
         }
 
-        // Pump OUT phase
-        if (lowSwitch == HIGH && highSwitch == HIGH)
-        {
-            pump_out();
-            vTaskDelay(pdMS_TO_TICKS(45000));
-            pump_stop();
-            vTaskDelete(NULL);  // stop task
-        }
-
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }

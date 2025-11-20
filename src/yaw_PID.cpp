@@ -22,24 +22,24 @@ float yawError(float target, float current)
     return error;
 }
 
-// void sendPIDLoRa(
-//     float currentYaw, float targetYaw, float error, float integral, float derivative, float output,
-//     int leftSpeed, int rightSpeed, float Kp, float Ki, float Kd
-// ) {
-//     String msg = "Yaw: " + String(currentYaw, 2) +
-//                  " | Target: " + String(targetYaw, 2) +
-//                  " | Error: " + String(error, 2) +
-//                  " | Int: " + String(integral, 2) +
-//                  " | Der: " + String(derivative, 2) +
-//                  " | Out: " + String(output, 2) +
-//                  " | L:" + String(leftSpeed) +
-//                  " R:" + String(rightSpeed) +
-//                  " | Kp: " + String(Kp, 2) +
-//                  " Ki: " + String(Ki, 2) +
-//                  " Kd: " + String(Kd, 2);
+void sendPIDLoRa(
+    float currentYaw, float targetYaw, float error, float integral, float derivative, float output,
+    int leftSpeed, int rightSpeed, float Kp, float Ki, float Kd
+) {
+    String msg = "Yaw: " + String(currentYaw, 2) +
+                 " | Target: " + String(targetYaw, 2) +
+                 " | Error: " + String(error, 2) +
+                 " | Int: " + String(integral, 2) +
+                 " | Der: " + String(derivative, 2) +
+                 " | Out: " + String(output, 2) +
+                 " | L:" + String(leftSpeed) +
+                 " R:" + String(rightSpeed) +
+                 " | Kp: " + String(Kp, 2) +
+                 " Ki: " + String(Ki, 2) +
+                 " Kd: " + String(Kd, 2);
 
-//     LoRaPrintln(msg); // send via LoRa
-// }
+    LoRaPrintln(msg); // send via LoRa
+}
 
 int constrainMotorSpeed(int value, int minAbs, int maxVal) {
     if (abs(value) < minAbs) return 0;
@@ -65,7 +65,6 @@ void yaw_PID(void *pvParameters)
     
     vTaskDelay(pdMS_TO_TICKS(1000));
     
-    setup_imu();
     sensors_event_t acc, gyro, mag, ori;
     
     while (1)    
@@ -88,8 +87,8 @@ void yaw_PID(void *pvParameters)
 
             baseSpeed = computeBaseSpeed(error);
 
-            int leftSpeed = constrainMotorSpeed(baseSpeed + output, 15, 100);
-            int rightSpeed = constrainMotorSpeed(baseSpeed - output, 15, 100);
+            int leftSpeed = constrainMotorSpeed(baseSpeed - output, 15, 100);
+            int rightSpeed = constrainMotorSpeed(baseSpeed + output, 15, 100);
 
             motorControl(leftSpeed, rightSpeed);
 
@@ -100,6 +99,6 @@ void yaw_PID(void *pvParameters)
         {
             stopMotors();
         }
-        vTaskDelay(pdMS_TO_TICKS(60));
+        vTaskDelay(pdMS_TO_TICKS(50));
     }
 }
