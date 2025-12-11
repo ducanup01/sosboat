@@ -3,11 +3,31 @@
 #include "global.h"
 #include "yaw_PID.h"
 
-// Define SPI instance (only once here)
+// Define SPI instance
 SPIClass loraSPI(VSPI);
 
+// -----------------------------
+// NEW: Handle Serial input
+// -----------------------------
+void monitor_serial_input() {
+    static String input = "";
+
+    while (Serial.available()) {
+        char c = Serial.read();
+
+        if (c == '\n' || c == '\r') {
+            if (input.length() > 0) {
+                handleLoRaCommand(input);     // parse same as LoRa
+                input = "";
+            }
+        } else {
+            input += c;
+        }
+    }
+}
+
 void handleLoRaCommand(String input) {
-    input.trim();  // remove whitespace
+    input.trim();
 
     // ----------------- PID tuning -----------------
     if (input.startsWith("kp=")) {
@@ -25,9 +45,6 @@ void handleLoRaCommand(String input) {
 
     // ----------------- Motion commands -----------------
     else if (input.equalsIgnoreCase("go")) {
-        // sensors_event_t ori;
-        // bno.getEvent(&ori, Adafruit_BNO055::VECTOR_EULER);
-        // targetYaw = normalizeYaw(ori.orientation.x);
         targetYaw = yaw;
         lastError = 0;
         integral = 0;
@@ -41,14 +58,14 @@ void handleLoRaCommand(String input) {
         LoRaPrintln("🛑 Boat stopped.");
     }
 
-    // ----------------- Turn commands -----------------
-    else if (input.startsWith("r")) { // e.g., "r90"
+    // ----------------- Turning -----------------
+    else if (input.startsWith("r")) {
         int angle = input.substring(1).toInt();
         targetYaw += angle;
         if (targetYaw >= 360) targetYaw -= 360;
         LoRaPrintln("➡️ Turn right " + String(angle) + "°! Target yaw: " + String(targetYaw, 2) + "°");
     }
-    else if (input.startsWith("l")) { // e.g., "l40"
+    else if (input.startsWith("l")) {
         int angle = input.substring(1).toInt();
         targetYaw -= angle;
         if (targetYaw < 0) targetYaw += 360;
@@ -73,15 +90,16 @@ void handleLoRaCommand(String input) {
     }
 
     // ----------------- Base speed -----------------
-    else if (input.startsWith("bs")) { // e.g., "bs 180"
+    else if (input.startsWith("bs")) {
         int speed = input.substring(3).toInt();
-        baseSpeed = constrain(speed, -255, 255); // limit speed
+        baseSpeed = constrain(speed, -255, 255);
         LoRaPrintln("⚡ Base speed set to " + String(baseSpeed));
     }
 
+    // ----------------- LED -----------------
     else if (input == "on") {
         digitalWrite(GREEN_LED, HIGH);
-        LoRaPrintln("[LoRa Task] LED ON");  
+        LoRaPrintln("[LoRa Task] LED ON");
     }
 
     else if (input == "off") {
@@ -96,14 +114,8 @@ void handleLoRaCommand(String input) {
 
 void monitor_lora(void *pvParameters)
 {
-    // pinMode(LED_PIN, OUTPUT);
     digitalWrite(GREEN_LED, LOW);
 
-    // Serial.println("[LoRa Task] Initializing...");
-
-    // Setup SPI & CS
-    // pinMode(LORA_CS, OUTPUT);
-    // digitalWrite(LORA_CS, HIGH);
     loraSPI.begin(LORA_SCK, LORA_MISO, LORA_MOSI, LORA_CS);
 
     LoRa.setSPI(loraSPI);
@@ -119,13 +131,8 @@ void monitor_lora(void *pvParameters)
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 
-    // if (!loraInit) {
-    //     Serial.println("[LoRa Task] Failed to start LoRa after retries!");
-    //     vTaskDelete(NULL);
-    //     return;
-    // }
+    Serial.println("[LoRa Task] LoRa initialized!");
 
-    Serial.println("[LoRa Task] LoRa initialized successfully!");
     LoRa.setTxPower(17);
     LoRa.setSpreadingFactor(7);
     LoRa.setSignalBandwidth(125E3);
@@ -133,10 +140,18 @@ void monitor_lora(void *pvParameters)
 
     while (true)
     {
-        String msg = LoRaRead(); // non-blocking read
+        // -----------------------------
+        // Read LoRa commands
+        // -----------------------------
+        String msg = LoRaRead();
         if (msg.length() > 0) {
-            handleLoRaCommand(msg); // handle command
+            handleLoRaCommand(msg);
         }
+
+        // -----------------------------
+        // Read Serial commands (NEW)
+        // -----------------------------
+        monitor_serial_input();
 
         vTaskDelay(pdMS_TO_TICKS(3));
     }

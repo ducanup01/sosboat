@@ -13,11 +13,6 @@
 #define LORA_RST   -1
 #define LORA_DIO0  -1
 
-// #define LORA_SCK   18
-// #define LORA_MISO  19
-// #define LORA_MOSI  23
-// #define LORA_CS    5 only for testing on lora station
-
 // Declare SPI instance (defined in .cpp)
 extern SPIClass loraSPI;
 
@@ -25,11 +20,11 @@ extern SPIClass loraSPI;
 void monitor_lora(void *pvParameters);
 void handleLoRaCommand(String input);
 
+// NEW: Serial helper function
+void monitor_serial_input();
+
 // ----- LoRa helper functions (defined elsewhere) -----
 String LoRaRead();
 void LoRaPrintln(const String &msg);
-
-// Task function declaration
-void monitor_lora(void *pvParameters);
 
 #endif

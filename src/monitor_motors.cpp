@@ -72,8 +72,8 @@ void pump_in()
     pumpAbort = false;  // reset
 
 
-    while (!(gpio_get_level(switch_low) == LOW &&
-             gpio_get_level(switch_high) == LOW))
+    while (!(gpio_get_level(switch_low) == LOW && // former low
+             gpio_get_level(switch_high) == LOW)) // former low
     {
         
         digitalWrite(motor_pump_in, HIGH);
@@ -138,7 +138,6 @@ void monitor_motors(void *pvParameters)
                 // Nothing to do
                 break;
         }
-
-        vTaskDelay(pdMS_TO_TICKS(10));
+        vTaskDelay(pdMS_TO_TICKS(100)); //former 10
     }
 }
