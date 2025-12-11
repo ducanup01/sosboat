@@ -1,9 +1,12 @@
 #include "monitor_i2c.h"
 #include "global.h"
+#include <Arduino.h>
 
 // Define sensor objects
 Adafruit_BNO055 bno = Adafruit_BNO055();
 Adafruit_BMP280 bmp;
+
+
 
 unsigned long lastPrint = 0;
 
@@ -18,11 +21,13 @@ void setup_i2c()
 void setup_imu()
 {
     LoRaPrintln("Initializing ...");
+    Serial.println("Submarine is active ✅");
     vTaskDelay(pdMS_TO_TICKS(1000));
 
     while (!bno.begin()) 
     {
         LoRaPrintln("❌ Failed to find BNO055! Check wiring or address.");
+        Serial.println("❌ Failed to find BNO055! Check wiring or address.");
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 
@@ -66,7 +71,7 @@ void monitor_i2c(void *pvParameters)
 
         pressure = bmp.readPressure() / 100.0F;
 
-        if (millis() - lastPrint >= 1000)
+        if (millis() - lastPrint >= 3000)
         {
             lastPrint = millis();
 
@@ -75,9 +80,12 @@ void monitor_i2c(void *pvParameters)
                 "Yaw: " + String(yaw, 3) + 
                 // " | Pitch: " + String(pitch, 3) + 
                 // " | Roll: " + String(roll, 3) +
-                " | Pressure: " + String(pressure, 3);
-    
+                " | Pressure: " + String(pressure, 3) +
+                " | Kp = " + String(Kp, 3) +
+                " | Ki = " + String(Ki, 3) +
+                " | Kd = " + String(Kd, 3);
             LoRaPrintln(msg);
+            Serial.println(msg);
         }
 
         vTaskDelay(pdMS_TO_TICKS(300));

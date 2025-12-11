@@ -43,13 +43,14 @@ void setup()
     {
         // ============================ USER TASKS BEGIN ============================
         
-        xTaskCreate(monitor_i2c, "Monitor IMU", 8192, NULL, 2, NULL);
         
         xTaskCreate(monitor_lora, "LoRA", 8192, NULL, 2, NULL);
         
         xTaskCreate(monitor_motors, "Monitor motors", 4096, NULL, 2, NULL);
         
         xTaskCreate(yaw_PID, "Straight YAW", 8192, NULL, 2, NULL);
+        
+        xTaskCreate(monitor_i2c, "Monitor IMU", 8192, NULL, 2, NULL);
 
         // ============================ USER TASKS END   ============================
     }
@@ -63,18 +64,6 @@ void setup()
     /***************************************************************************
      * ████████████████████████████████████████████████████████████████████████ *
      ***************************************************************************/
-    
-    
-    
-    
-    // xTaskCreate(led_control, "LED", 1024, NULL, 2, NULL);
-    // xTaskCreate(monitor_input, "INPUT PINS", 2048, NULL, 2, NULL);
-    // xTaskCreate(motor_control, "Motor control", 2048, NULL, 2, NULL);
-
-
-    // vTaskDelay(pdMS_TO_TICKS(5000));
-    // xTaskCreate(monitor_lora, "LoRA", 2048, NULL, 2, NULL);
-    // xTaskCreate(monitor_sd, "SD card", 8192, NULL, 2, NULL);
 }
 
 

@@ -4,7 +4,7 @@
 #include "global.h"
 
 // ---- Define global variables (only here) ----
-const char* ap_ssid = "chiec thuyen ngoai xa";
+const char* ap_ssid = "chiec thuyen ngoai x";
 const char* ap_password = "123123123";
 
 

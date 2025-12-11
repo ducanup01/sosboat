@@ -25,7 +25,7 @@ float yawError(float target, float current);
 
 void sendPIDLoRa(
     float currentYaw, float targetYaw, float error, float integral, float derivative, float output,
-    int leftSpeed, int rightSpeed, float Kp, float Ki, float Kd
+    int leftSpeed, int rightSpeed, volatile float Kp, volatile float Ki, volatile float Kd
 );
 
 int constrainMotorSpeed(int value, int minAbs, int maxVal);

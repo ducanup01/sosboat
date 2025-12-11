@@ -1,9 +1,9 @@
 #include "global.h"
 #include <LoRa.h>
 
-float Kp = 7.5;
-float Ki = 2.5; 
-float Kd = 4.0; 
+volatile float Kp = 5;
+volatile float Ki = 6; 
+volatile float Kd = 7; 
 
 // Define variables
 float yaw = 0;
@@ -13,7 +13,7 @@ float pressure = 0;
 
 float targetYaw = 0;
 
-int baseSpeed = 180;
+int baseSpeed = 20; //0 to 155
 
 // Motor states
 volatile PumpCommand pumpCommand = PUMP_IDLE;

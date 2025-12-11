@@ -24,7 +24,7 @@ float yawError(float target, float current)
 
 void sendPIDLoRa(
     float currentYaw, float targetYaw, float error, float integral, float derivative, float output,
-    int leftSpeed, int rightSpeed, float Kp, float Ki, float Kd
+    int leftSpeed, int rightSpeed, volatile float Kp, volatile float Ki, volatile float Kd
 ) {
     String msg = "Yaw: " + String(currentYaw, 2) +
                  " | Target: " + String(targetYaw, 2) +
@@ -44,8 +44,8 @@ void sendPIDLoRa(
 int constrainMotorSpeed(int value, int minAbs, int maxVal) {
     if (abs(value) < minAbs) return 0;
     value = constrain(value, -maxVal, maxVal);
-    if (value > 0) return value + 155;
-    if (value < 0) return value - 155;
+    if (value > 0) return value + 120;
+    if (value < 0) return value - 120;
     return 0;
 }
 
@@ -71,7 +71,7 @@ void yaw_PID(void *pvParameters)
     {
         if (isRunning)
         {
-            float currentYaw = yaw;
+            float currentYaw = normalizeYaw(yaw);
             float error = yawError(targetYaw, currentYaw);
 
             unsigned long now = micros();

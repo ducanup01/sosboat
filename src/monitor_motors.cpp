@@ -72,8 +72,8 @@ void pump_in()
     pumpAbort = false;  // reset
 
 
-    while (!(gpio_get_level(switch_low) == HIGH &&
-             gpio_get_level(switch_high) == HIGH))
+    while (!(gpio_get_level(switch_low) == LOW &&
+             gpio_get_level(switch_high) == LOW))
     {
         
         digitalWrite(motor_pump_in, HIGH);

@@ -2,6 +2,7 @@
 #define __MONITOR_I2C__
 
 #include <Wire.h>
+#include <Arduino.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
 #include <Adafruit_BMP280.h>

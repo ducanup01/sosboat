@@ -9,9 +9,9 @@
 #define MODE_PIN GPIO_NUM_36
 #define GREEN_LED GPIO_NUM_17
 
-extern float Kp;
-extern float Ki; 
-extern float Kd; 
+extern volatile float Kp;
+extern volatile float Ki; 
+extern volatile float Kd; 
 
 // --- Global variables (declare only) ---
 extern float yaw;
